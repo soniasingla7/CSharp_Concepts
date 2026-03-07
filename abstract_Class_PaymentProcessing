@@ -1,3 +1,14 @@
+/*Example scenario:
+
+Build a Payment Processing Framework
+
+Where developers can plug in:
+
+CreditCardPayment
+PayPalPayment
+CryptoPayment
+
+And you must design the abstract architecture.*/
 
 namespace paymentNamspace
 {
