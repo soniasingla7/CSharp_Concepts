@@ -1,0 +1,125 @@
+
+namespace paymentNamspace
+{
+   // base abstract class to enforce template method pattern
+   public abstract class Payment
+   {
+      public double Amount { get; set; }
+      // every payment type has different implementation to process payement
+      // so this method is abstract, derived class with implement this.
+      //protected, so Accessible only within base class and derived classes
+      protected abstract void ProcessPayment();
+      // this method implementation is common for all classes 
+      //  thats why this is implemented in abstract class only.
+      protected bool validateAmount()
+      {
+         if (Amount <= 0)
+         {
+            Console.WriteLine("Not a valid amount");
+            return false;
+         }
+         return true;
+      }
+      // alogorithm enforcement- template method pattern
+      public void ExecutePayment()
+      {
+         if(validateAmount())
+            ProcessPayment();
+      }
+   }
+   // CreditCardPayment derived class
+   public class CreditCardPayment : Payment
+   {
+      private string CreditCardNumber { get; set; }
+      public CreditCardPayment(string ccNumber)
+      {
+         CreditCardNumber = ccNumber;
+      }
+      protected override void ProcessPayment()
+      {
+         Console.WriteLine($"Payment Processed of Amount {Amount} of Credit card Number {CreditCardNumber} Successfully.");
+      }
+   }
+   // PayPalPayment derived class
+   public class PayPalPayment : Payment
+   {
+      private string PayPalID { get; set; }
+      public PayPalPayment(string payPalID)
+      {
+         PayPalID = payPalID;
+      }
+      protected override void ProcessPayment()
+      {
+         Console.WriteLine($"Payment Processed of Amount {Amount} of PayPal Account {PayPalID} Successfully.");
+      }
+   }
+   //CryptoPaymentDerived Class
+   public class CryptoPayment : Payment
+   {
+      private string AccountNumber { get; set; }
+      public CryptoPayment(string accNumber)
+      {
+         AccountNumber = accNumber;
+      }
+      protected override void ProcessPayment()
+      {
+         Console.WriteLine($"Payment Processed of Amount {Amount} of Crypto Account {AccountNumber} Successfully.");
+      }
+   }
+   // Factory class created to implement Factory method pattern
+   // this will help us to create object of Payment Class with exposing the object creation logic.
+   public static class PaymentFactory
+   {
+      // method to create Payment object based on PaymentType.
+      public static Payment CreatePayment(string paymentType, string PaymentID)
+      {
+         switch (paymentType)
+         {
+            case "Crypto":
+               return new CryptoPayment(PaymentID);
+            case "Creditcard":
+               return new CreditCardPayment(PaymentID);
+            case "Paypal":
+               return new PayPalPayment(PaymentID);
+            default:
+               throw new Exception("Invalid payment type");
+         }
+      }
+   }
+
+   public class Program
+   {
+      public static void Main()
+      {
+         // this will call CreatePayment Factory method, to create and object of class Crypto type.
+         // this is runtime Polymorphism. as which object will be created and which ProcessPayment method 
+         // Factory decides which concrete Payment object is created.
+         // Because the reference type is Payment, runtime polymorphism
+         // determines which ProcessPayment() implementation is executed.
+         // will be code be decided at runtime.
+         //also known as Dynamic Method Dispatch
+         Payment payment = PaymentFactory.CreatePayment("Crypto", "124-345-654");
+         payment.Amount = 23000;
+         // this will call ExecutePayment, which in turn implement Template method pattern 
+         // by enforcing 
+         // sequence of execution/algorithm.
+         payment.ExecutePayment();
+      }
+   }
+}
+/*
+Runtime flow:
+
+Program
+   |
+PaymentFactory.CreatePayment()
+   |
+Creates CryptoPayment object
+   |
+Payment reference points to CryptoPayment
+   |
+ExecutePayment()
+   |
+validateAmount()
+   |
+CryptoPayment.ProcessPayment()*/
