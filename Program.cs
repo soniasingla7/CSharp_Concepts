@@ -1,0 +1,203 @@
+﻿/* Example Scenario:
+
+Build a Payment Processing System
+
+Where users can choose different payment methods such as:
+
+CreditCardPayment
+PayPalPayment
+CryptoPayment
+UPIPayment
+
+The system should dynamically create the appropriate payment processor
+based on the user’s selected payment type.
+
+Each payment method must implement its own payment logic but follow a
+common interface so that the checkout system can process payments
+without knowing the specific implementation.
+
+The architecture should be loosely coupled and easily extendable so
+that new payment methods can be added in the future without modifying
+the existing client code.
+
+The system should:
+
+1. Allow the user to select a payment type.
+2. Collect required details depending on the payment method.
+3. Validate the payment amount before processing.
+4. Use a factory to create the appropriate payment object.
+5. Process the payment using the selected payment method.
+
+Design the abstract architecture using an interface and a factory
+pattern to support multiple payment types.
+*/
+
+namespace PaymentProcessor
+{
+   // Enum for PaymentTypes, can add new PaymentType as per requirement
+   public enum PaymentTypes
+   {
+      Credit = 1,
+      Crypto = 2,
+      Paypal = 3,
+      UPI = 4
+   }
+   //PaymentFactory to create class level instance based on input choosen by user
+   //implement Factory Method Pattern
+   public class PaymentFactory
+   {
+      public static IPayment GetPayment(PaymentTypes paymentType)
+      {
+         switch (paymentType)
+         {
+            case PaymentTypes.Credit: return new CreditCardPayment();
+            case PaymentTypes.Crypto: return new CryptoPayment();
+            case PaymentTypes.Paypal: return new PayPalPayment();
+            case PaymentTypes.UPI: return new UPIPayment();
+            default: throw new ArgumentException("Invalid PaymentType");
+         }
+      }
+   }
+   // IPayment interface, which will force each implemnting class to have Pay logic
+   // of their own
+   public interface IPayment
+   {
+      void Pay(PaymentRequest paymentRequest);
+
+   }
+   //PayPalPayment implemneting IPayment Interface where logic for pay will reside.
+   internal class PayPalPayment : IPayment
+   {
+      public void Pay(PaymentRequest paymentRequest)
+      {
+         Console.WriteLine($"Payment of Amount {paymentRequest.Amount} Processd using Paypal email {paymentRequest.Email}");
+      }
+   }
+   //CryptoPayment implemneting IPayment Interface where logic for pay will reside.
+   internal class CryptoPayment : IPayment
+   {
+      public void Pay(PaymentRequest paymentRequest)
+      {
+         Console.WriteLine($"Payment of Amount {paymentRequest.Amount} Processd using Crypto Wallet {paymentRequest.WalletAddress}");
+      }
+
+   }
+   //UPIPayment implemneting IPayment Interface where logic for pay will reside.
+   internal class UPIPayment : IPayment
+    {
+        public void Pay(PaymentRequest paymentRequest)
+        {
+            Console.WriteLine($"Payment of Amount {paymentRequest.Amount} Processd using UPI Wallet {paymentRequest.WalletAddress}");
+        }
+    }
+    //CreditCardPayment implemneting IPayment Interface where logic for pay will reside.
+    internal class CreditCardPayment : IPayment
+    {
+        public void Pay(PaymentRequest paymentRequest)
+        {
+            Console.WriteLine($"Payment of Amount {paymentRequest.Amount} Processd using Credit card No.{paymentRequest.CardNumber}");
+        }
+
+    }
+   //PaymentRequest to make it loosly coupled with Class type, CreditCard, Paypal etc
+   // we will create an object of Request class and add inputs from user based on card type they choose.
+   public class PaymentRequest
+   {
+      public double Amount { get; set; }
+      public string CardNumber { get; set; }
+      public string CVV { get; set; }
+
+      public string Email { get; set; }
+      public string WalletAddress { get; set; }
+
+      public bool ValidateAmount()
+      {
+         if (Amount <= 0)
+         {
+            Console.WriteLine("Invalid Amount");
+            return false;
+         }
+         return true;
+      }
+
+   }
+   //CheckOut class will be exposed to user, for getting paymentrequest params and 
+   // create an Interface object to call pay method.
+   public class CheckOut
+   {
+      private readonly IPayment _payment;
+      public CheckOut(IPayment payment)
+      {
+         _payment = payment; // save the object
+      }
+      public void Process(PaymentRequest paymentRequest)
+      {
+         if (paymentRequest.ValidateAmount()) // call Pay when ready
+            _payment.Pay(paymentRequest);
+      }
+   }
+   public class Program()
+   {
+      static void Main()
+      {
+         Console.WriteLine("Enter Payment Type (1=Credit, 2=Crypto, 3=Paypal, 4=UPI):");
+         string input = Console.ReadLine();
+         PaymentTypes paymenttype = (PaymentTypes)Convert.ToInt32(input);
+         IPayment payment = PaymentFactory.GetPayment(paymenttype);
+         PaymentRequest paymentRequest = new PaymentRequest();
+         paymentRequest.Amount = 5000;
+         if (paymenttype == PaymentTypes.Credit)
+         {
+            Console.WriteLine("Enter Card Number:");
+            string creditcardnumber = Console.ReadLine();
+            paymentRequest.CardNumber = creditcardnumber;
+            Console.WriteLine("Enter CVV:");
+            string cvvnumber = Console.ReadLine();
+            paymentRequest.CVV = cvvnumber;
+         }
+         else if (paymenttype == PaymentTypes.Paypal)
+         {
+            Console.WriteLine("Enter Email:");
+            string email = Console.ReadLine();
+            paymentRequest.Email = email;
+         }
+         else if (paymenttype == PaymentTypes.Crypto || paymenttype == PaymentTypes.UPI)
+         {
+            Console.WriteLine("Enter Wallet address:");
+            string wallet = Console.ReadLine();
+            paymentRequest.WalletAddress = wallet;
+         }
+         CheckOut ch = new CheckOut(payment);
+         ch.Process(paymentRequest);
+      }
+   }
+}
+/*
+Runtime Flow:
+
+Program
+   |
+User selects Payment Type
+   |
+PaymentFactory.GetPayment()
+   |
+Factory creates specific payment object
+(CreditCardPayment / CryptoPayment / PayPalPayment / UPIPayment)
+   |
+IPayment reference points to selected payment object
+   |
+Create PaymentRequest object
+   |
+User enters required payment details
+(CardNumber / Email / WalletAddress)
+   |
+CheckOut object created with IPayment reference
+   |
+CheckOut.Process()
+   |
+ValidateAmount()
+   |
+SelectedPayment.Pay()
+   |
+Display Payment Processed Message
+*/
